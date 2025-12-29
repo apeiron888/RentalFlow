@@ -1,0 +1,5 @@
+# github.com/rentalflow/auth-service/internal/handler
+internal/handler/grpc_handler.go:160:77: not enough arguments in call to h.authService.UpdateProfile
+	have (context.Context, uuid.UUID, *string, *string, *string)
+	want (context.Context, uuid.UUID, *string, *string, *string, *string)
+internal/handler/http_handler.go:172:29: undefined: http.MethodPUT

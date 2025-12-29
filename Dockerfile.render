@@ -1,0 +1,67 @@
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /app
+
+# Copy go mod and sum files
+COPY go.work go.work.sum ./
+COPY go.mod go.sum ./
+COPY services/api-gateway/go.mod services/api-gateway/go.sum ./services/api-gateway/
+COPY services/auth-service/go.mod services/auth-service/go.sum ./services/auth-service/
+COPY services/booking-service/go.mod services/booking-service/go.sum ./services/booking-service/
+COPY services/inventory-service/go.mod services/inventory-service/go.sum ./services/inventory-service/
+COPY services/notification-service/go.mod services/notification-service/go.sum ./services/notification-service/
+COPY services/payment-service/go.mod services/payment-service/go.sum ./services/payment-service/
+COPY services/review-service/go.mod services/review-service/go.sum ./services/review-service/
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build all services
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/api-gateway ./services/api-gateway/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/auth-service ./services/auth-service/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/booking-service ./services/booking-service/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/inventory-service ./services/inventory-service/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/notification-service ./services/notification-service/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/payment-service ./services/payment-service/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/review-service ./services/review-service/cmd/server
+
+# Final stage
+FROM alpine:3.19
+
+RUN apk --no-cache add ca-certificates tzdata bash curl
+
+WORKDIR /app
+
+# Copy binaries
+COPY --from=builder /bin/api-gateway .
+COPY --from=builder /bin/auth-service .
+COPY --from=builder /bin/booking-service .
+COPY --from=builder /bin/inventory-service .
+COPY --from=builder /bin/notification-service .
+COPY --from=builder /bin/payment-service .
+COPY --from=builder /bin/review-service .
+
+# Copy entrypoint script
+COPY scripts/render_entrypoint.sh .
+RUN chmod +x render_entrypoint.sh
+
+# Copy migrations (assuming standard structure, adjusting as needed based on exploration)
+# We might need to adjust this if migrations are scattered
+COPY services/auth-service/migrations ./migrations/auth
+COPY services/booking-service/migrations ./migrations/booking
+COPY services/inventory-service/migrations ./migrations/inventory
+COPY services/notification-service/migrations ./migrations/notification
+COPY services/payment-service/migrations ./migrations/payment
+COPY services/review-service/migrations ./migrations/review
+
+# Expose the main port (Gateway)
+EXPOSE 8080
+
+# Health check (pinging the gateway)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["./render_entrypoint.sh"]

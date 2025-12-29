@@ -1,6 +1,6 @@
 module github.com/rentalflow/inventory-service
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/google/uuid v1.5.0

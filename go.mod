@@ -1,6 +1,6 @@
 module github.com/rentalflow/rentalflow
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/jackc/pgx/v5 v5.5.1

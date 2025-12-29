@@ -36,6 +36,42 @@ type Config struct {
 
 	// External Services
 	Services ServicesConfig
+
+	// Cloudinary
+	Cloudinary CloudinaryConfig
+
+	// Chapa
+	Chapa ChapaConfig
+
+	// SMTP
+	SMTP SMTPConfig
+}
+
+// CloudinaryConfig holds Cloudinary settings
+type CloudinaryConfig struct {
+	CloudName    string
+	APIKey       string
+	APISecret    string
+	UploadPreset string
+}
+
+// ChapaConfig holds Chapa settings
+type ChapaConfig struct {
+	SecretKey     string
+	PublicKey     string
+	WebhookSecret string
+	PaymentLink   string
+	CallbackURL   string
+}
+
+// SMTPConfig holds SMTP settings
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+	FromName string
 }
 
 // DatabaseConfig holds database connection settings
@@ -178,6 +214,30 @@ func Load(serviceName string) (*Config, error) {
 			NotificationServiceAddr: v.GetString("services.notification"),
 			ReviewServiceAddr:       v.GetString("services.review"),
 		},
+
+		Cloudinary: CloudinaryConfig{
+			CloudName:    v.GetString("cloudinary.cloud_name"),
+			APIKey:       v.GetString("cloudinary.api_key"),
+			APISecret:    v.GetString("cloudinary.api_secret"),
+			UploadPreset: v.GetString("cloudinary.upload_preset"),
+		},
+
+		Chapa: ChapaConfig{
+			SecretKey:     v.GetString("chapa.secret_key"),
+			PublicKey:     v.GetString("chapa.public_key"),
+			WebhookSecret: v.GetString("chapa.webhook_secret"),
+			PaymentLink:   v.GetString("chapa.payment_link"),
+			CallbackURL:   v.GetString("chapa.callback_url"),
+		},
+
+		SMTP: SMTPConfig{
+			Host:     v.GetString("smtp.host"),
+			Port:     v.GetInt("smtp.port"),
+			Username: v.GetString("smtp.username"),
+			Password: v.GetString("smtp.password"),
+			From:     v.GetString("smtp.from_email"),
+			FromName: v.GetString("smtp.from_name"),
+		},
 	}
 
 	return config, nil
@@ -227,6 +287,26 @@ func setDefaults(v *viper.Viper, serviceName string) {
 	v.SetDefault("services.inventory", "localhost:50052")
 	v.SetDefault("services.booking", "localhost:50053")
 	v.SetDefault("services.payment", "localhost:50054")
-	v.SetDefault("services.notification", "localhost:50055")
 	v.SetDefault("services.review", "localhost:50056")
+
+	// Cloudinary (Defaults are empty, must be provided by env)
+	v.SetDefault("cloudinary.cloud_name", "")
+	v.SetDefault("cloudinary.api_key", "")
+	v.SetDefault("cloudinary.api_secret", "")
+	v.SetDefault("cloudinary.upload_preset", "")
+
+	// Chapa
+	v.SetDefault("chapa.secret_key", "")
+	v.SetDefault("chapa.public_key", "")
+	v.SetDefault("chapa.webhook_secret", "")
+	v.SetDefault("chapa.payment_link", "")
+	v.SetDefault("chapa.callback_url", "http://localhost:3001/payment/callback")
+
+	// SMTP
+	v.SetDefault("smtp.host", "smtp.gmail.com")
+	v.SetDefault("smtp.port", 587)
+	v.SetDefault("smtp.username", "")
+	v.SetDefault("smtp.password", "")
+	v.SetDefault("smtp.from_email", "")
+	v.SetDefault("smtp.from_name", "RentalFlow")
 }

@@ -6,7 +6,7 @@ services:
     envVars:
       - key: LOG_LEVEL
         value: info
-      # Database Connections (will be auto-populated by Render if we link specific DBs, 
+      # Database Connections (will be auto-populated by Render if we link specific DBs,
       # but standard environment vars need to be mapped)
       - key: RENTALFLOW_DATABASE_HOST
         fromService: rentalflow-db
@@ -23,7 +23,7 @@ services:
       - key: RENTALFLOW_DATABASE_NAME
         fromService: rentalflow-db
         property: database
-      
+
       # Redis Connection
       - key: RENTALFLOW_REDIS_HOST
         fromService: rentalflow-redis
@@ -31,12 +31,48 @@ services:
       - key: RENTALFLOW_REDIS_PORT
         fromService: rentalflow-redis
         property: port
-        
+
       # Secrets (Should be manual or sync)
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRY
         value: 24h
+
+      # Chapa Payment Gateway
+      - key: RENTALFLOW_CHAPA_SECRET_KEY
+        sync: false
+      - key: RENTALFLOW_CHAPA_PUBLIC_KEY
+        sync: false
+      - key: RENTALFLOW_CHAPA_WEBHOOK_SECRET
+        sync: false
+      - key: RENTALFLOW_CHAPA_PAYMENT_LINK
+        value: http://checkout.chapa.co/checkout/web/payment/PL-xJ8dMm1pWkNB
+      - key: RENTALFLOW_CHAPA_CALLBACK_URL
+        value: https://rentalflow-backend.onrender.com/payment/callback
+
+      # SMTP Email
+      - key: RENTALFLOW_SMTP_HOST
+        value: smtp.gmail.com
+      - key: RENTALFLOW_SMTP_PORT
+        value: 587
+      - key: RENTALFLOW_SMTP_USERNAME
+        value: alleoo2004@gmail.com
+      - key: RENTALFLOW_SMTP_PASSWORD
+        sync: false
+      - key: RENTALFLOW_SMTP_FROM_EMAIL
+        value: alleoo2004@gmail.com
+      - key: RENTALFLOW_SMTP_FROM_NAME
+        value: RentalFlow
+
+      # Cloudinary
+      - key: RENTALFLOW_CLOUDINARY_CLOUD_NAME
+        value: ds6ednoms
+      - key: RENTALFLOW_CLOUDINARY_API_KEY
+        value: 166556655245121
+      - key: RENTALFLOW_CLOUDINARY_API_SECRET
+        sync: false
+      - key: RENTALFLOW_CLOUDINARY_UPLOAD_PRESET
+        value: rentalflow
 
 databases:
   - name: rentalflow-db

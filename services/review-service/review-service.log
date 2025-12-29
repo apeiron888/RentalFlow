@@ -1,0 +1,5 @@
+[90m21:04:02[0m [32mINF[0m Starting Review Service... [36mcomponent=[0mmain [36mservice=[0mreview
+[90m21:04:02[0m [32mINF[0m Connected to database [36mcomponent=[0mmain [36mhost=[0mlocalhost [36mservice=[0mreview
+[90m21:04:02[0m [32mINF[0m HTTP API server listening [36maddr=[0m:8086 [36mcomponent=[0mmain [36mservice=[0mreview
+[90m08:10:38[0m [32mINF[0m Shutting down server... [36mcomponent=[0mmain [36mservice=[0mreview
+[90m08:10:38[0m [32mINF[0m Server stopped [36mcomponent=[0mmain [36mservice=[0mreview

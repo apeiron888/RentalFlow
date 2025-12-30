@@ -18,7 +18,10 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	baseConfig.Database.Database = "payment_db"
+	// Database settings
+	if baseConfig.Database.Database == "" {
+		baseConfig.Database.Database = "payment_db"
+	}
 
 	return &Config{
 		Config:             baseConfig,

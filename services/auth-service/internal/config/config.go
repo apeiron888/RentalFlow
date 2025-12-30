@@ -22,7 +22,11 @@ func Load() (*Config, error) {
 	}
 
 	// Database settings
-	baseConfig.Database.Database = "auth_db"
+	// Database name is set via RENTALFLOW_DATABASE_NAME env var or defaults to {service}_db
+	// We want to use the shared DB if provided
+	if baseConfig.Database.Database == "" {
+		baseConfig.Database.Database = "auth_db"
+	}
 
 	return &Config{
 		Config:     baseConfig,

@@ -17,7 +17,9 @@ func Load() (*Config, error) {
 	}
 
 	// Database settings
-	baseConfig.Database.Database = "inventory_db"
+	if baseConfig.Database.Database == "" {
+		baseConfig.Database.Database = "inventory_db"
+	}
 
 	return &Config{
 		Config: baseConfig,

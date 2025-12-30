@@ -15,7 +15,6 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	baseConfig.Database.Database = "notification_db"
 
 	return &Config{
 		Config:       baseConfig,

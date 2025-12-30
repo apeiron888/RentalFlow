@@ -19,7 +19,9 @@ func Load() (*Config, error) {
 
 	// Override ports for booking service
 	// Database settings
-	baseConfig.Database.Database = "booking_db"
+	if baseConfig.Database.Database == "" {
+		baseConfig.Database.Database = "booking_db"
+	}
 
 	return &Config{
 		Config:               baseConfig,

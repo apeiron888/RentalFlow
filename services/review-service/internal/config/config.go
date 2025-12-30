@@ -11,6 +11,9 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	baseConfig.Database.Database = "review_db"
+	// Database settings
+	if baseConfig.Database.Database == "" {
+		baseConfig.Database.Database = "review_db"
+	}
 	return &Config{Config: baseConfig}, nil
 }

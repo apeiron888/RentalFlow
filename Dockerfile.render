@@ -19,13 +19,13 @@ RUN go mod download
 COPY . .
 
 # Build all services
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/api-gateway ./services/api-gateway/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/auth-service ./services/auth-service/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/booking-service ./services/booking-service/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/inventory-service ./services/inventory-service/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/notification-service ./services/notification-service/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/payment-service ./services/payment-service/cmd/server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/review-service ./services/review-service/cmd/server
+RUN cd services/api-gateway && CGO_ENABLED=0 GOOS=linux go build -o /bin/api-gateway ./cmd/server
+RUN cd services/auth-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/auth-service ./cmd/server
+RUN cd services/booking-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/booking-service ./cmd/server
+RUN cd services/inventory-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/inventory-service ./cmd/server
+RUN cd services/notification-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/notification-service ./cmd/server
+RUN cd services/payment-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/payment-service ./cmd/server
+RUN cd services/review-service && CGO_ENABLED=0 GOOS=linux go build -o /bin/review-service ./cmd/server
 
 # Final stage
 FROM alpine:3.19

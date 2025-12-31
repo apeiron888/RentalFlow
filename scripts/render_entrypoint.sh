@@ -23,7 +23,10 @@ echo "Running Database Migrations..."
 DB_SOURCE="postgres://${RENTALFLOW_DATABASE_USER}:${RENTALFLOW_DATABASE_PASSWORD}@${RENTALFLOW_DATABASE_HOST}:${RENTALFLOW_DATABASE_PORT}/${RENTALFLOW_DATABASE_NAME}?sslmode=disable"
 
 # Run migrations for each service
+# Fix for potential dirty state from previous failed deployment (003 gap issue)
+/usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" force 1
 /usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" up
+
 /usr/bin/migrate -path ./migrations/inventory -database "$DB_SOURCE" up
 /usr/bin/migrate -path ./migrations/booking -database "$DB_SOURCE" up
 /usr/bin/migrate -path ./migrations/payment -database "$DB_SOURCE" up

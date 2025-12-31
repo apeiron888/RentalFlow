@@ -32,6 +32,17 @@ FROM alpine:3.19
 
 RUN apk --no-cache add ca-certificates tzdata bash curl
 
+WORKDIR /app
+
+# Copy binaries
+COPY --from=builder /bin/api-gateway .
+COPY --from=builder /bin/auth-service .
+COPY --from=builder /bin/booking-service .
+COPY --from=builder /bin/inventory-service .
+COPY --from=builder /bin/notification-service .
+COPY --from=builder /bin/payment-service .
+COPY --from=builder /bin/review-service .
+
 # Copy entrypoint script
 COPY scripts/render_entrypoint.sh .
 RUN chmod +x render_entrypoint.sh

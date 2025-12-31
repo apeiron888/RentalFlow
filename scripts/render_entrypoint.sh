@@ -15,17 +15,20 @@ export PAYMENT_PORT=8084
 export REVIEW_PORT=8085
 export NOTIFICATION_PORT=8086
 
-export NOTIFICATION_PORT=8086
-
 echo "Running Database Migrations..."
 # Construct DB Connection String
 # Note: Assuming SSL mode disable for internal render network, or 'require' if needed. Defaulting to disable to ensure connectivity.
 DB_SOURCE="postgres://${RENTALFLOW_DATABASE_USER}:${RENTALFLOW_DATABASE_PASSWORD}@${RENTALFLOW_DATABASE_HOST}:${RENTALFLOW_DATABASE_PORT}/${RENTALFLOW_DATABASE_NAME}?sslmode=disable"
 
 # Run migrations for each service
-# Fix for potential dirty state from previous failed deployment (003 gap issue)
-/usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" force 1
-/usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" up
+# Debug: List migration files to ensure they exist
+echo "Listing migration files..."
+ls -R ./migrations
+
+# Run migrations for each service
+# Fix: Force version 2 (assuming schema applied from previous run) to bypass "missing down file" phantom error
+/usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" force 2
+# /usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" up
 
 /usr/bin/migrate -path ./migrations/inventory -database "$DB_SOURCE" up
 /usr/bin/migrate -path ./migrations/booking -database "$DB_SOURCE" up

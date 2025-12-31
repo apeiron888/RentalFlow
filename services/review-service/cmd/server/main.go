@@ -35,6 +35,9 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
+	defer client.Close(ctx)
+
+	log.Info().Str("uri", cfg.Database.GetURI()).Msg("Connected to database")
 
 	reviewRepo := repository.NewMongoReviewRepository(client.DB)
 	reviewService := service.NewReviewService(reviewRepo)

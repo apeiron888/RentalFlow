@@ -43,7 +43,7 @@ func (s *PaymentService) InitializePayment(ctx context.Context, bookingID, userI
 			LastName:    "Customer",
 			TxRef:       txRef,
 			CallbackURL: fmt.Sprintf("http://localhost:3001/payment/callback?tx_ref=%s", txRef),
-			ReturnURL:   fmt.Sprintf("http://localhost:3001/bookings/%s?payment_status=success", bookingID.String()),
+			ReturnURL:   fmt.Sprintf("http://localhost:3001/payment/callback?tx_ref=%s&booking_id=%s", txRef, bookingID.String()),
 			CustomTitle: "RentalFlow Payment",
 			CustomDesc:  fmt.Sprintf("Payment for Booking #%s", bookingID.String()[:8]),
 			Metadata: map[string]string{

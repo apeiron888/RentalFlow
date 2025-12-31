@@ -15,6 +15,24 @@ export PAYMENT_PORT=8084
 export REVIEW_PORT=8085
 export NOTIFICATION_PORT=8086
 
+export NOTIFICATION_PORT=8086
+
+echo "Running Database Migrations..."
+# Construct DB Connection String
+# Note: Assuming SSL mode disable for internal render network, or 'require' if needed. Defaulting to disable to ensure connectivity.
+DB_SOURCE="postgres://${RENTALFLOW_DATABASE_USER}:${RENTALFLOW_DATABASE_PASSWORD}@${RENTALFLOW_DATABASE_HOST}:${RENTALFLOW_DATABASE_PORT}/${RENTALFLOW_DATABASE_NAME}?sslmode=disable"
+
+# Run migrations for each service
+/usr/bin/migrate -path ./migrations/auth -database "$DB_SOURCE" up
+/usr/bin/migrate -path ./migrations/inventory -database "$DB_SOURCE" up
+/usr/bin/migrate -path ./migrations/booking -database "$DB_SOURCE" up
+/usr/bin/migrate -path ./migrations/payment -database "$DB_SOURCE" up
+/usr/bin/migrate -path ./migrations/review -database "$DB_SOURCE" up
+# Notification service migration if exists (Dockerfile copies it)
+if [ -d "./migrations/notification" ]; then
+    /usr/bin/migrate -path ./migrations/notification -database "$DB_SOURCE" up
+fi
+
 echo "Starting RentalFlow Microservices..."
 
 # 1. Start Auth Service

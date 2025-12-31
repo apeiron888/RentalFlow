@@ -7,6 +7,39 @@ set -e
 
 export PORT=${PORT:-8080}
 
+# Start RabbitMQ in the background
+echo "Starting RabbitMQ..."
+mkdir -p /var/lib/rabbitmq /var/log/rabbitmq /etc/rabbitmq
+chown -R rabbitmq:rabbitmq /var/lib/rabbitmq /var/log/rabbitmq /etc/rabbitmq || true
+
+# Enable management plugin for health checks (optional, but makes 'curl localhost:15672' work)
+rabbitmq-plugins enable rabbitmq_management || true
+
+# Start RabbitMQ server as the rabbitmq user
+su rabbitmq -s /bin/sh -c "/usr/sbin/rabbitmq-server" &
+PID_RABBIT=$!
+
+# Wait for RabbitMQ to be ready
+echo "Waiting for RabbitMQ to start..."
+timeout=60
+while [ $timeout -gt 0 ]; do
+    if rabbitmqctl status > /dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+    timeout=$((timeout - 2))
+done
+
+if [ $timeout -le 0 ]; then
+    echo "Warning: RabbitMQ startup timed out. Services might fail to connect."
+else
+    echo "RabbitMQ is ready."
+    # Configure RabbitMQ if needed 
+    rabbitmqctl add_user rentalflow devpassword || true
+    rabbitmqctl set_user_tags rentalflow administrator || true
+    rabbitmqctl set_permissions -p / rentalflow ".*" ".*" ".*" || true
+fi
+
 # Backend Service Ports (Internal)
 export AUTH_PORT=8081
 export INVENTORY_PORT=8082
@@ -14,6 +47,13 @@ export BOOKING_PORT=8083
 export PAYMENT_PORT=8084
 export REVIEW_PORT=8085
 export NOTIFICATION_PORT=8086
+
+# RabbitMQ Connection ENV for all services
+export RENTALFLOW_RABBITMQ_HOST=localhost
+export RENTALFLOW_RABBITMQ_PORT=5672
+export RENTALFLOW_RABBITMQ_USER=rentalflow
+export RENTALFLOW_RABBITMQ_PASSWORD=devpassword
+export RENTALFLOW_RABBITMQ_VHOST=/
 
 
 echo "Starting RentalFlow Microservices..."
@@ -86,7 +126,7 @@ export NOTIFICATION_SERVICE_URL="http://localhost:$NOTIFICATION_PORT"
 PID_GATEWAY=$!
 
 # Signal trapping to kill all processes on exit
-trap "kill $PID_AUTH $PID_INVENTORY $PID_BOOKING $PID_PAYMENT $PID_REVIEW $PID_NOTIFICATION $PID_GATEWAY; exit" SIGINT SIGTERM
+trap "kill $PID_AUTH $PID_INVENTORY $PID_BOOKING $PID_PAYMENT $PID_REVIEW $PID_NOTIFICATION $PID_GATEWAY $PID_RABBIT; exit" SIGINT SIGTERM
 
 echo "All services started. Access Gateway at port $PORT"
 

@@ -35,21 +35,21 @@ const (
 
 // User represents a user in the system
 type User struct {
-	ID                    uuid.UUID
-	Email                 string
-	PasswordHash          string
-	FirstName             string
-	LastName              string
-	Phone                 string
-	Bio                   string
-	AvatarURL             string
-	Role                  UserRole
-	IdentityVerified      bool
-	VerificationStatus    VerificationStatus
-	RefreshTokenHash      string
-	RefreshTokenExpiresAt *time.Time
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	ID                    uuid.UUID          `json:"id" bson:"_id"`
+	Email                 string             `json:"email" bson:"email"`
+	PasswordHash          string             `json:"-" bson:"password_hash"`
+	FirstName             string             `json:"first_name" bson:"first_name"`
+	LastName              string             `json:"last_name" bson:"last_name"`
+	Phone                 string             `json:"phone" bson:"phone"`
+	Bio                   string             `json:"bio" bson:"bio"`
+	AvatarURL             string             `json:"avatar_url" bson:"avatar_url"`
+	Role                  UserRole           `json:"role" bson:"role"`
+	IdentityVerified      bool               `json:"identity_verified" bson:"identity_verified"`
+	VerificationStatus    VerificationStatus `json:"verification_status" bson:"verification_status"`
+	RefreshTokenHash      string             `json:"-" bson:"refresh_token_hash"`
+	RefreshTokenExpiresAt *time.Time         `json:"-" bson:"refresh_token_expires_at"`
+	CreatedAt             time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt             time.Time          `json:"updated_at" bson:"updated_at"`
 }
 
 // NewUser creates a new user with default values

@@ -45,34 +45,34 @@ const (
 
 // RentalItem represents a rental item
 type RentalItem struct {
-	ID          uuid.UUID
-	OwnerID     uuid.UUID
-	Title       string
-	Description string
-	Category    ItemCategory
-	Subcategory string
+	ID          uuid.UUID    `json:"id" bson:"_id"`
+	OwnerID     uuid.UUID    `json:"owner_id" bson:"owner_id"`
+	Title       string       `json:"title" bson:"title"`
+	Description string       `json:"description" bson:"description"`
+	Category    ItemCategory `json:"category" bson:"category"`
+	Subcategory string       `json:"subcategory" bson:"subcategory"`
 
 	// Pricing
-	DailyRate       float64
-	WeeklyRate      float64
-	MonthlyRate     float64
-	SecurityDeposit float64
+	DailyRate       float64 `json:"daily_rate" bson:"daily_rate"`
+	WeeklyRate      float64 `json:"weekly_rate" bson:"weekly_rate"`
+	MonthlyRate     float64 `json:"monthly_rate" bson:"monthly_rate"`
+	SecurityDeposit float64 `json:"security_deposit" bson:"security_deposit"`
 
 	// Location
-	Address   string
-	City      string
-	Latitude  float64
-	Longitude float64
+	Address   string  `json:"address" bson:"address"`
+	City      string  `json:"city" bson:"city"`
+	Latitude  float64 `json:"latitude" bson:"latitude"`
+	Longitude float64 `json:"longitude" bson:"longitude"`
 
 	// Specifications (stored as map)
-	Specifications map[string]string
+	Specifications map[string]string `json:"specifications" bson:"specifications"`
 
 	// Images
-	Images []string
+	Images []string `json:"images" bson:"images"`
 
-	IsActive  bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	IsActive  bool      `json:"is_active" bson:"is_active"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 }
 
 // NewRentalItem creates a new rental item
@@ -95,13 +95,13 @@ func NewRentalItem(ownerID uuid.UUID, title, description string, category ItemCa
 
 // AvailabilitySlot represents an availability slot for a rental item
 type AvailabilitySlot struct {
-	ID           uuid.UUID
-	RentalItemID uuid.UUID
-	StartDate    time.Time
-	EndDate      time.Time
-	Status       AvailabilityStatus
-	BookingID    *uuid.UUID
-	CreatedAt    time.Time
+	ID           uuid.UUID          `json:"id" bson:"_id"`
+	RentalItemID uuid.UUID          `json:"rental_item_id" bson:"rental_item_id"`
+	StartDate    time.Time          `json:"start_date" bson:"start_date"`
+	EndDate      time.Time          `json:"end_date" bson:"end_date"`
+	Status       AvailabilityStatus `json:"status" bson:"status"`
+	BookingID    *uuid.UUID         `json:"booking_id,omitempty" bson:"booking_id,omitempty"`
+	CreatedAt    time.Time          `json:"created_at" bson:"created_at"`
 }
 
 // NewAvailabilitySlot creates a new availability slot
@@ -118,15 +118,15 @@ func NewAvailabilitySlot(rentalItemID uuid.UUID, startDate, endDate time.Time, s
 
 // MaintenanceLog represents a maintenance log entry
 type MaintenanceLog struct {
-	ID              uuid.UUID
-	RentalItemID    uuid.UUID
-	MaintenanceType string
-	Description     string
-	StartDate       time.Time
-	EndDate         *time.Time
-	Cost            float64
-	Status          MaintenanceStatus
-	CreatedAt       time.Time
+	ID              uuid.UUID         `json:"id" bson:"_id"`
+	RentalItemID    uuid.UUID         `json:"rental_item_id" bson:"rental_item_id"`
+	MaintenanceType string            `json:"maintenance_type" bson:"maintenance_type"`
+	Description     string            `json:"description" bson:"description"`
+	StartDate       time.Time         `json:"start_date" bson:"start_date"`
+	EndDate         *time.Time        `json:"end_date,omitempty" bson:"end_date,omitempty"`
+	Cost            float64           `json:"cost" bson:"cost"`
+	Status          MaintenanceStatus `json:"status" bson:"status"`
+	CreatedAt       time.Time         `json:"created_at" bson:"created_at"`
 }
 
 // NewMaintenanceLog creates a new maintenance log

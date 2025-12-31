@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -6,13 +6,17 @@ WORKDIR /app
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gateway ./services/api-gateway/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o api-gateway ./services/api-gateway/cmd/server
 
 # Final stage
 FROM alpine:3.19
-RUN apk --no-cache add ca-certificates
+
+RUN apk --no-cache add ca-certificates tzdata
+
 WORKDIR /app
-COPY --from=builder /app/gateway .
+
+# Copy binary from builder
+COPY --from=builder /app/api-gateway .
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1

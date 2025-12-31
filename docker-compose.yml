@@ -1,26 +1,22 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: rentalflow-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rentalflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rentalflow123}
-      POSTGRES_DB: ${POSTGRES_DB:-rentalflow}
+  # MongoDB Database
+  mongo:
+    image: mongo:6-jammy
+    container_name: rentalflow-mongo
     ports:
-      - "5450:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - mongo_data:/data/db
     networks:
       - rentalflow
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U rentalflow" ]
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
+      start_period: 40s
 
   # Redis Cache
   redis:
@@ -49,10 +45,7 @@ services:
       - RENTALFLOW_SERVICE_NAME=auth-service
       - RENTALFLOW_HTTP_PORT=8080
       - RENTALFLOW_GRPC_PORT=50051
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=auth_db
       - RENTALFLOW_REDIS_HOST=redis
       - RENTALFLOW_REDIS_PORT=6379
@@ -60,7 +53,7 @@ services:
       - RENTALFLOW_JWT_ACCESS_EXPIRES_IN=${JWT_EXPIRY:-24h}
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -79,15 +72,12 @@ services:
     environment:
       - RENTALFLOW_SERVICE_NAME=inventory-service
       - RENTALFLOW_HTTP_PORT=8080
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=inventory_db
       - RENTALFLOW_SERVICES_AUTH=auth-service:50051
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
       auth-service:
         condition: service_started
@@ -106,16 +96,13 @@ services:
     environment:
       - RENTALFLOW_SERVICE_NAME=booking-service
       - RENTALFLOW_HTTP_PORT=8080
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=booking_db
       - RENTALFLOW_SERVICES_AUTH=auth-service:50051
       - RENTALFLOW_SERVICES_INVENTORY=inventory-service:8080
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
       auth-service:
         condition: service_started
@@ -136,10 +123,7 @@ services:
     environment:
       - RENTALFLOW_SERVICE_NAME=payment-service
       - RENTALFLOW_HTTP_PORT=8080
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=payment_db
       - CHAPA_SECRET_KEY=${CHAPA_SECRET_KEY}
       - CHAPA_PUBLIC_KEY=${CHAPA_PUBLIC_KEY}
@@ -147,7 +131,7 @@ services:
       - CALLBACK_URL=${CALLBACK_URL:-http://localhost:3001/payment/callback}
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
     networks:
       - rentalflow
@@ -164,14 +148,11 @@ services:
     environment:
       - RENTALFLOW_SERVICE_NAME=review-service
       - RENTALFLOW_HTTP_PORT=8080
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=review_db
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
     networks:
       - rentalflow
@@ -188,10 +169,7 @@ services:
     environment:
       - RENTALFLOW_SERVICE_NAME=notification-service
       - RENTALFLOW_HTTP_PORT=8080
-      - RENTALFLOW_DATABASE_HOST=postgres
-      - RENTALFLOW_DATABASE_PORT=5432
-      - RENTALFLOW_DATABASE_USER=${POSTGRES_USER:-rentalflow}
-      - RENTALFLOW_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-rentalflow123}
+      - RENTALFLOW_DATABASE_URI=mongodb://mongo:27017
       - RENTALFLOW_DATABASE_NAME=notification_db
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -201,7 +179,7 @@ services:
       - FROM_NAME=${FROM_NAME:-RentalFlow}
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
     networks:
       - rentalflow
@@ -241,4 +219,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  mongo_data:

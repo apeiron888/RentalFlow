@@ -15,18 +15,18 @@ const (
 )
 
 type Review struct {
-	ID           uuid.UUID  `json:"id"`
-	BookingID    uuid.UUID  `json:"booking_id"`
-	ReviewerID   uuid.UUID  `json:"reviewer_id"`
-	TargetUserID *uuid.UUID `json:"target_user_id,omitempty"`
-	TargetItemID *uuid.UUID `json:"target_item_id,omitempty"`
-	ReviewType   ReviewType `json:"review_type"`
-	Rating       float64    `json:"rating"`
-	Comment      string     `json:"comment"`
-	IsVerified   bool       `json:"is_verified"`
-	IsVisible    bool       `json:"is_visible"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	ID           uuid.UUID  `json:"id" bson:"_id"`
+	BookingID    uuid.UUID  `json:"booking_id" bson:"booking_id"`
+	ReviewerID   uuid.UUID  `json:"reviewer_id" bson:"reviewer_id"`
+	TargetUserID *uuid.UUID `json:"target_user_id,omitempty" bson:"target_user_id,omitempty"`
+	TargetItemID *uuid.UUID `json:"target_item_id,omitempty" bson:"target_item_id,omitempty"`
+	ReviewType   ReviewType `json:"review_type" bson:"review_type"`
+	Rating       float64    `json:"rating" bson:"rating"`
+	Comment      string     `json:"comment" bson:"comment"`
+	IsVerified   bool       `json:"is_verified" bson:"is_verified"`
+	IsVisible    bool       `json:"is_visible" bson:"is_visible"`
+	CreatedAt    time.Time  `json:"created_at" bson:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" bson:"updated_at"`
 }
 
 func NewReview(bookingID, reviewerID uuid.UUID, reviewType ReviewType, rating float64, comment string) *Review {

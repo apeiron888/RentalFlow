@@ -9,10 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rentalflow/notification-service/internal/config"
 	"github.com/rentalflow/notification-service/internal/email"
 	"github.com/rentalflow/notification-service/internal/handler"
+	"github.com/rentalflow/notification-service/internal/repository"
+	"github.com/rentalflow/notification-service/internal/service"
+	"github.com/rentalflow/rentalflow/pkg/database"
 	"github.com/rentalflow/rentalflow/pkg/logger"
 )
 
@@ -31,13 +33,19 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, cfg.Database.DSN())
+	client, err := database.New(cfg.Database.GetURI(), cfg.Database.Database)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	defer pool.Close()
+	defer client.Close(ctx)
 
-	log.Info().Str("host", cfg.Database.Host).Msg("Connected to database")
+	log.Info().Str("uri", cfg.Database.GetURI()).Msg("Connected to database")
+
+	notifRepo := repository.NewMongoNotificationRepository(client.DB)
+	msgRepo := repository.NewMongoMessageRepository(client.DB)
+
+	// Initialize service (unused for now as HTTP handler doesn't expose it yet)
+	_ = service.NewNotificationService(notifRepo, msgRepo)
 
 	// Initialize email service
 	emailConfig := email.Config{

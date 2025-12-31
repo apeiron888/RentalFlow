@@ -1,8 +1,8 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Copy source code (entire repo)
+# Copy source code (entire repo as context is root)
 COPY . .
 
 # Build the application
@@ -17,9 +17,6 @@ WORKDIR /app
 
 # Copy binary from builder
 COPY --from=builder /app/payment-service .
-
-# Copy migrations
-COPY --from=builder /app/services/payment-service/migrations ./migrations
 
 # Expose ports
 EXPOSE 50051 8085

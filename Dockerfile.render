@@ -32,34 +32,9 @@ FROM alpine:3.19
 
 RUN apk --no-cache add ca-certificates tzdata bash curl
 
-# Install golang-migrate
-RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz && \
-    mv migrate /usr/bin/migrate && \
-    chmod +x /usr/bin/migrate
-
-WORKDIR /app
-
-# Copy binaries
-COPY --from=builder /bin/api-gateway .
-COPY --from=builder /bin/auth-service .
-COPY --from=builder /bin/booking-service .
-COPY --from=builder /bin/inventory-service .
-COPY --from=builder /bin/notification-service .
-COPY --from=builder /bin/payment-service .
-COPY --from=builder /bin/review-service .
-
 # Copy entrypoint script
 COPY scripts/render_entrypoint.sh .
 RUN chmod +x render_entrypoint.sh
-
-# Copy migrations (assuming standard structure, adjusting as needed based on exploration)
-# We might need to adjust this if migrations are scattered
-COPY services/auth-service/migrations ./migrations/auth
-COPY services/booking-service/migrations ./migrations/booking
-COPY services/inventory-service/migrations ./migrations/inventory
-COPY services/notification-service/migrations ./migrations/notification
-COPY services/payment-service/migrations ./migrations/payment
-COPY services/review-service/migrations ./migrations/review
 
 # Expose the main port (Gateway)
 EXPOSE 8080

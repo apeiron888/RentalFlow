@@ -76,23 +76,13 @@ type SMTPConfig struct {
 
 // DatabaseConfig holds database connection settings
 type DatabaseConfig struct {
-	Host         string
-	Port         int
-	User         string
-	Password     string
-	Database     string
-	SSLMode      string
-	MaxOpenConns int
-	MaxIdleConns int
-	MaxLifetime  time.Duration
+	URI      string
+	Database string
 }
 
-// DSN returns the PostgreSQL connection string
-func (d DatabaseConfig) DSN() string {
-	return fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		d.Host, d.Port, d.User, d.Password, d.Database, d.SSLMode,
-	)
+// GetURI returns the MongoDB connection string
+func (d DatabaseConfig) GetURI() string {
+	return d.URI
 }
 
 // RedisConfig holds Redis connection settings
@@ -173,15 +163,8 @@ func Load(serviceName string) (*Config, error) {
 		HTTPPort:    v.GetInt("http_port"),
 
 		Database: DatabaseConfig{
-			Host:         v.GetString("database.host"),
-			Port:         v.GetInt("database.port"),
-			User:         v.GetString("database.user"),
-			Password:     v.GetString("database.password"),
-			Database:     v.GetString("database.name"),
-			SSLMode:      v.GetString("database.ssl_mode"),
-			MaxOpenConns: v.GetInt("database.max_open_conns"),
-			MaxIdleConns: v.GetInt("database.max_idle_conns"),
-			MaxLifetime:  v.GetDuration("database.max_lifetime"),
+			URI:      v.GetString("database.uri"),
+			Database: v.GetString("database.name"),
 		},
 
 		Redis: RedisConfig{
@@ -253,15 +236,9 @@ func setDefaults(v *viper.Viper, serviceName string) {
 	v.SetDefault("http_port", 8080)
 
 	// Database
-	v.SetDefault("database.host", "localhost")
-	v.SetDefault("database.port", 5432)
-	v.SetDefault("database.user", "rentalflow")
-	v.SetDefault("database.password", "devpassword")
+	// Database
+	v.SetDefault("database.uri", "mongodb://localhost:27017")
 	v.SetDefault("database.name", serviceName+"_db")
-	v.SetDefault("database.ssl_mode", "disable")
-	v.SetDefault("database.max_open_conns", 25)
-	v.SetDefault("database.max_idle_conns", 5)
-	v.SetDefault("database.max_lifetime", 5*time.Minute)
 
 	// Redis
 	v.SetDefault("redis.host", "localhost")

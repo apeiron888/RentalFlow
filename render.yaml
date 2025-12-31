@@ -6,23 +6,11 @@ services:
     envVars:
       - key: LOG_LEVEL
         value: info
-      # Database Connections (will be auto-populated by Render if we link specific DBs,
-      # but standard environment vars need to be mapped)
-      - key: RENTALFLOW_DATABASE_HOST
-        fromService: rentalflow-db
-        property: host
-      - key: RENTALFLOW_DATABASE_PORT
-        fromService: rentalflow-db
-        property: port
-      - key: RENTALFLOW_DATABASE_USER
-        fromService: rentalflow-db
-        property: user
-      - key: RENTALFLOW_DATABASE_PASSWORD
-        fromService: rentalflow-db
-        property: password
+      # Database Connections
+      - key: MONGODB_URI
+        value: mongodb+srv://alleoo2004_db_user:9cElBPBPQjE285f8@rentalflow.ivirf9x.mongodb.net/?appName=rentalflow
       - key: RENTALFLOW_DATABASE_NAME
-        fromService: rentalflow-db
-        property: database
+        value: rentalflow
 
       # Redis Connection
       - key: RENTALFLOW_REDIS_HOST
@@ -75,10 +63,5 @@ services:
         value: rentalflow
 
 databases:
-  - name: rentalflow-db
-    databaseName: rentalflow
-    user: rentalflow
-    plan: free # or starter, based on needs
-
   - name: rentalflow-redis
     plan: free # Redis free tier on Render

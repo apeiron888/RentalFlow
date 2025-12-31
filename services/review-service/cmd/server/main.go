@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rentalflow/rentalflow/pkg/database"
 	"github.com/rentalflow/rentalflow/pkg/logger"
 	"github.com/rentalflow/review-service/internal/config"
 	"github.com/rentalflow/review-service/internal/handler"
@@ -31,53 +31,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, cfg.Database.DSN())
+	client, err := database.New(cfg.Database.GetURI(), cfg.Database.Database)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	defer pool.Close()
 
-	log.Info().Str("host", cfg.Database.Host).Msg("Connected to database")
-
-	// Run migration
-	migrationSQL := `
-    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-    DO $$ BEGIN
-        CREATE TYPE review_type AS ENUM ('renter_to_owner', 'owner_to_renter', 'renter_to_item');
-    EXCEPTION
-        WHEN duplicate_object THEN null;
-    END $$;
-
-    CREATE TABLE IF NOT EXISTS reviews (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        booking_id UUID NOT NULL,
-        reviewer_id UUID NOT NULL,
-        target_user_id UUID,
-        target_item_id UUID,
-        review_type review_type NOT NULL,
-        rating DECIMAL(2, 1) CHECK (rating >= 1.0 AND rating <= 5.0),
-        comment TEXT NOT NULL,
-        is_verified BOOLEAN DEFAULT FALSE,
-        is_visible BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_reviews_booking ON reviews(booking_id);
-    CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON reviews(reviewer_id);
-    CREATE INDEX IF NOT EXISTS idx_reviews_target_user ON reviews(target_user_id);
-    CREATE INDEX IF NOT EXISTS idx_reviews_target_item ON reviews(target_item_id);
-    CREATE INDEX IF NOT EXISTS idx_reviews_type ON reviews(review_type);
-    CREATE INDEX IF NOT EXISTS idx_reviews_visible ON reviews(is_visible);
-    `
-	_, err = pool.Exec(ctx, migrationSQL)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to run migration")
-	}
-	log.Info().Msg("Migration applied successfully")
-
-	reviewRepo := repository.NewPostgresReviewRepository(pool)
+	reviewRepo := repository.NewMongoReviewRepository(client.DB)
 	reviewService := service.NewReviewService(reviewRepo)
 	httpHandler := handler.NewHTTPHandler(reviewService)
 

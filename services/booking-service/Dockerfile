@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -17,9 +17,6 @@ WORKDIR /app
 
 # Copy binary from builder
 COPY --from=builder /app/booking-service .
-
-# Copy migrations
-COPY --from=builder /app/services/booking-service/migrations ./migrations
 
 # Expose ports
 EXPOSE 50051 8082

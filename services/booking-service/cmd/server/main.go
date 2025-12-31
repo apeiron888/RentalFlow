@@ -9,11 +9,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rentalflow/booking-service/internal/config"
 	"github.com/rentalflow/booking-service/internal/handler"
 	"github.com/rentalflow/booking-service/internal/repository"
 	"github.com/rentalflow/booking-service/internal/service"
+	"github.com/rentalflow/rentalflow/pkg/database"
 	"github.com/rentalflow/rentalflow/pkg/logger"
 )
 
@@ -32,15 +32,16 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, cfg.Database.DSN())
+	client, err := database.New(cfg.Database.GetURI(), cfg.Database.Database)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	defer pool.Close()
+	defer client.Close(ctx)
 
-	log.Info().Str("host", cfg.Database.Host).Msg("Connected to database")
+	log.Info().Str("uri", cfg.Database.GetURI()).Msg("Connected to database")
 
-	bookingRepo := repository.NewPostgresBookingRepository(pool)
+	// Initialize repositories
+	bookingRepo := repository.NewMongoBookingRepository(client.DB)
 	bookingService := service.NewBookingService(bookingRepo)
 	httpHandler := handler.NewHTTPHandler(bookingService)
 

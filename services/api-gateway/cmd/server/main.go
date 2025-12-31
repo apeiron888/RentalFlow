@@ -53,7 +53,7 @@ func main() {
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      middleware.CORS(r),
+		Handler:      middleware.CORS(cfg.AllowedOrigins)(r),
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		IdleTimeout:  60 * time.Second,

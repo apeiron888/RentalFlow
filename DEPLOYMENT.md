@@ -43,6 +43,9 @@ SMTP_PASSWORD=<app-password>
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=<your-cloud-name>
 CLOUDINARY_UPLOAD_PRESET=<your-preset>
+
+# CORS Origins (Comma separated list of frontend domains)
+ALLOWED_ORIGINS=https://your-frontend.vercel.app,http://localhost:3000
 ```
 
 ### 3. Start Services
@@ -235,9 +238,9 @@ docker-compose exec postgres psql -U rentalflow -d rentalflow
 ```
 
 ### Frontend can't connect to backend
-- Check `REACT_APP_API_URL` in `.env`
-- Verify CORS settings in services
-- Ensure all services are running
+- Check `VITE_API_URL` in your frontend environment variables.
+- Verify that your frontend domain is added to `ALLOWED_ORIGINS` in the backend (API Gateway).
+- Ensure all services are running.
 
 ### Email not sending
 - Verify SMTP credentials

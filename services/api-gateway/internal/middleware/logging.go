@@ -38,25 +38,43 @@ func Logger(next http.Handler) http.Handler {
 	})
 }
 
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set specific origin for frontend
-		origin := r.Header.Get("Origin")
-		if origin == "http://localhost:3000" || origin == "http://localhost:3001" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-		} else {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-		}
+func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
 
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			// Check if origin is allowed
+			isAllowed := false
+			if len(allowedOrigins) == 1 && allowedOrigins[0] == "*" {
+				isAllowed = true
+			} else {
+				for _, o := range allowedOrigins {
+					if o == origin {
+						isAllowed = true
+						break
+					}
+				}
+			}
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+			if isAllowed && origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			} else if !isAllowed && origin != "" {
+				// Fallback for non-whitelisted but present origins
+				w.Header().Set("Access-Control-Allow-Origin", "null")
+			} else {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			}
 
-		next.ServeHTTP(w, r)
-	})
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

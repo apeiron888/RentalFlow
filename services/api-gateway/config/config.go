@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -18,7 +19,8 @@ type Config struct {
 	NotificationServiceURL string
 	ReviewServiceURL       string
 
-	LogLevel string
+	AllowedOrigins []string
+	LogLevel       string
 }
 
 func Load() *Config {
@@ -35,8 +37,17 @@ func Load() *Config {
 		PaymentServiceURL:      getEnv("PAYMENT_SERVICE_URL", "http://localhost:8084"),
 		NotificationServiceURL: getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8085"),
 		ReviewServiceURL:       getEnv("REVIEW_SERVICE_URL", "http://localhost:8086"),
+		AllowedOrigins:         getEnvList("ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:3001"}),
 		LogLevel:               getEnv("LOG_LEVEL", "info"),
 	}
+}
+
+func getEnvList(key string, defaultValues []string) []string {
+	if value := os.Getenv(key); value != "" {
+		// Simple comma separated split
+		return strings.Split(value, ",")
+	}
+	return defaultValues
 }
 
 func getEnv(key, defaultValue string) string {

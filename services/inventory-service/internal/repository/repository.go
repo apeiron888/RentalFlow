@@ -26,6 +26,7 @@ type ItemFilters struct {
 	MinPrice *float64
 	MaxPrice *float64
 	IsActive *bool
+	SortBy   *string
 }
 
 // AvailabilityRepository defines the interface for availability slot data access

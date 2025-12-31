@@ -7,14 +7,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/rentalflow/booking-service/internal/domain"
 	"github.com/rentalflow/booking-service/internal/repository"
+	"github.com/rentalflow/rentalflow/pkg/messaging"
 )
 
 type BookingService struct {
 	bookingRepo repository.BookingRepository
+	broker      *messaging.MessageBroker
 }
 
-func NewBookingService(bookingRepo repository.BookingRepository) *BookingService {
-	return &BookingService{bookingRepo: bookingRepo}
+func NewBookingService(bookingRepo repository.BookingRepository, broker *messaging.MessageBroker) *BookingService {
+	return &BookingService{
+		bookingRepo: bookingRepo,
+		broker:      broker,
+	}
 }
 
 func (s *BookingService) CreateBooking(ctx context.Context, renterID, ownerID, rentalItemID uuid.UUID, startDate, endDate time.Time, dailyRate, securityDeposit float64) (*domain.Booking, error) {
@@ -25,6 +30,11 @@ func (s *BookingService) CreateBooking(ctx context.Context, renterID, ownerID, r
 	booking := domain.NewBooking(renterID, ownerID, rentalItemID, startDate, endDate, dailyRate, securityDeposit)
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
 		return nil, err
+	}
+
+	// Publish event
+	if s.broker != nil {
+		s.broker.Publish(ctx, "booking_events", "booking.created", booking)
 	}
 
 	return booking, nil
@@ -75,6 +85,11 @@ func (s *BookingService) ConfirmBooking(ctx context.Context, bookingID, ownerID 
 		return nil, err
 	}
 
+	// Publish event
+	if s.broker != nil {
+		s.broker.Publish(ctx, "booking_events", "booking.confirmed", booking)
+	}
+
 	return booking, nil
 }
 
@@ -101,6 +116,11 @@ func (s *BookingService) CancelBooking(ctx context.Context, bookingID, userID uu
 	booking.CancellationReason = reason
 	if err := s.bookingRepo.Update(ctx, booking); err != nil {
 		return nil, err
+	}
+
+	// Publish event
+	if s.broker != nil {
+		s.broker.Publish(ctx, "booking_events", "booking.cancelled", booking)
 	}
 
 	return booking, nil

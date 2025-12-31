@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # MongoDB Database
@@ -6,7 +6,7 @@ services:
     image: mongo:6-jammy
     container_name: rentalflow-mongo
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo_data:/data/db
     networks:
@@ -23,13 +23,31 @@ services:
     image: redis:7-alpine
     container_name: rentalflow-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - rentalflow
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
+      retries: 5
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rentalflow-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rentalflow
+      - RABBITMQ_DEFAULT_PASS=devpassword
+    networks:
+      - rentalflow
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   # Auth Service
@@ -100,9 +118,15 @@ services:
       - RENTALFLOW_DATABASE_NAME=booking_db
       - RENTALFLOW_SERVICES_AUTH=auth-service:50051
       - RENTALFLOW_SERVICES_INVENTORY=inventory-service:8080
+      - RENTALFLOW_RABBITMQ_HOST=rabbitmq
+      - RENTALFLOW_RABBITMQ_PORT=5672
+      - RENTALFLOW_RABBITMQ_USER=rentalflow
+      - RENTALFLOW_RABBITMQ_PASSWORD=devpassword
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       mongo:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       auth-service:
         condition: service_started
@@ -129,9 +153,15 @@ services:
       - CHAPA_PUBLIC_KEY=${CHAPA_PUBLIC_KEY}
       - CHAPA_WEBHOOK_SECRET=${CHAPA_WEBHOOK_SECRET}
       - CALLBACK_URL=${CALLBACK_URL:-http://localhost:3001/payment/callback}
+      - RENTALFLOW_RABBITMQ_HOST=rabbitmq
+      - RENTALFLOW_RABBITMQ_PORT=5672
+      - RENTALFLOW_RABBITMQ_USER=rentalflow
+      - RENTALFLOW_RABBITMQ_PASSWORD=devpassword
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       mongo:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - rentalflow
@@ -177,9 +207,15 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - FROM_EMAIL=${FROM_EMAIL:-noreply@rentalflow.com}
       - FROM_NAME=${FROM_NAME:-RentalFlow}
+      - RENTALFLOW_RABBITMQ_HOST=rabbitmq
+      - RENTALFLOW_RABBITMQ_PORT=5672
+      - RENTALFLOW_RABBITMQ_USER=rentalflow
+      - RENTALFLOW_RABBITMQ_PASSWORD=devpassword
       - RENTALFLOW_LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       mongo:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - rentalflow

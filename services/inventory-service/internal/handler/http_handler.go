@@ -171,6 +171,9 @@ func (h *HTTPHandler) ListItems(w http.ResponseWriter, r *http.Request) {
 
 	category := r.URL.Query().Get("category")
 	city := r.URL.Query().Get("city")
+	minPriceStr := r.URL.Query().Get("min_price")
+	maxPriceStr := r.URL.Query().Get("max_price")
+	sort := r.URL.Query().Get("sort")
 
 	filters := repository.ItemFilters{}
 	if category != "" {
@@ -179,6 +182,19 @@ func (h *HTTPHandler) ListItems(w http.ResponseWriter, r *http.Request) {
 	}
 	if city != "" {
 		filters.City = &city
+	}
+	if minPriceStr != "" {
+		if val, err := strconv.ParseFloat(minPriceStr, 64); err == nil {
+			filters.MinPrice = &val
+		}
+	}
+	if maxPriceStr != "" {
+		if val, err := strconv.ParseFloat(maxPriceStr, 64); err == nil {
+			filters.MaxPrice = &val
+		}
+	}
+	if sort != "" {
+		filters.SortBy = &sort
 	}
 
 	items, total, err := h.inventoryService.ListItems(r.Context(), page, pageSize, filters)
@@ -196,6 +212,7 @@ func (h *HTTPHandler) ListItems(w http.ResponseWriter, r *http.Request) {
 			"city":       item.City,
 			"daily_rate": item.DailyRate,
 			"is_active":  item.IsActive,
+			"images":     item.Images,
 		}
 	}
 
@@ -293,6 +310,7 @@ func (h *HTTPHandler) GetOwnerItems(w http.ResponseWriter, r *http.Request) {
 			"category":   item.Category,
 			"daily_rate": item.DailyRate,
 			"is_active":  item.IsActive,
+			"images":     item.Images,
 		}
 	}
 
@@ -304,8 +322,82 @@ func (h *HTTPHandler) GetOwnerItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
-	// Simplified - just call ListItems
-	h.ListItems(w, r)
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		query = r.URL.Query().Get("query")
+	}
+
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	category := r.URL.Query().Get("category")
+	city := r.URL.Query().Get("city")
+	minPriceStr := r.URL.Query().Get("min_price")
+	maxPriceStr := r.URL.Query().Get("max_price")
+	sort := r.URL.Query().Get("sort")
+
+	filters := repository.ItemFilters{}
+	if category != "" {
+		cat := domain.ItemCategory(category)
+		filters.Category = &cat
+	}
+	if city != "" {
+		filters.City = &city
+	}
+	if minPriceStr != "" {
+		if val, err := strconv.ParseFloat(minPriceStr, 64); err == nil {
+			filters.MinPrice = &val
+		}
+	}
+	if maxPriceStr != "" {
+		if val, err := strconv.ParseFloat(maxPriceStr, 64); err == nil {
+			filters.MaxPrice = &val
+		}
+	}
+	if sort != "" {
+		filters.SortBy = &sort
+	}
+
+	var items []*domain.RentalItem
+	var total int
+	var err error
+
+	if query != "" {
+		items, total, err = h.inventoryService.SearchItems(r.Context(), query, page, pageSize, filters)
+	} else {
+		items, total, err = h.inventoryService.ListItems(r.Context(), page, pageSize, filters)
+	}
+
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	result := make([]map[string]interface{}, len(items))
+	for i, item := range items {
+		result[i] = map[string]interface{}{
+			"id":         item.ID.String(),
+			"title":      item.Title,
+			"category":   item.Category,
+			"city":       item.City,
+			"daily_rate": item.DailyRate,
+			"is_active":  item.IsActive,
+			"images":     item.Images,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"items": result,
+		"total": total,
+		"page":  page,
+	})
 }
 
 func (h *HTTPHandler) BlockDates(w http.ResponseWriter, r *http.Request) {

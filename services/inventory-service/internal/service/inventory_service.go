@@ -74,6 +74,18 @@ func (s *InventoryService) ListItems(ctx context.Context, page, pageSize int, fi
 	return s.itemRepo.List(ctx, offset, pageSize, filters)
 }
 
+// SearchItems searches items by query and filters
+func (s *InventoryService) SearchItems(ctx context.Context, query string, page, pageSize int, filters repository.ItemFilters) ([]*domain.RentalItem, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+	return s.itemRepo.Search(ctx, query, filters, offset, pageSize)
+}
+
 // GetOwnerItems retrieves items owned by a specific user
 func (s *InventoryService) GetOwnerItems(ctx context.Context, ownerID uuid.UUID, page, pageSize int) ([]*domain.RentalItem, int, error) {
 	if page < 1 {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/rentalflow/notification-service/internal/domain"
@@ -18,6 +19,46 @@ func NewNotificationService(notificationRepo repository.NotificationRepository, 
 		notificationRepo: notificationRepo,
 		messageRepo:      messageRepo,
 	}
+}
+
+func (s *NotificationService) HandleBookingEvent(ctx context.Context, eventData []byte) error {
+	var event struct {
+		ID           uuid.UUID `json:"id"`
+		RenterID     uuid.UUID `json:"renter_id"`
+		OwnerID      uuid.UUID `json:"owner_id"`
+		RentalItemID uuid.UUID `json:"rental_item_id"`
+		Status       string    `json:"status"`
+	}
+
+	if err := json.Unmarshal(eventData, &event); err != nil {
+		return err
+	}
+
+	title := "Booking Update"
+	message := ""
+	var targetUserID uuid.UUID
+
+	switch event.Status {
+	case "pending": // booking.created
+		targetUserID = event.OwnerID
+		title = "New Booking Request"
+		message = "You have a new booking request for your item."
+	case "confirmed": // booking.confirmed
+		targetUserID = event.RenterID
+		title = "Booking Confirmed"
+		message = "Your booking request has been confirmed by the owner."
+	case "cancelled": // booking.cancelled
+		targetUserID = event.RenterID
+		title = "Booking Cancelled"
+		message = "Your booking has been cancelled."
+	}
+
+	if targetUserID != uuid.Nil {
+		_, err := s.SendNotification(ctx, targetUserID, "booking", title, message, domain.ChannelInApp)
+		return err
+	}
+
+	return nil
 }
 
 func (s *NotificationService) SendNotification(ctx context.Context, userID uuid.UUID, notifType, title, message string, channel domain.NotificationChannel) (*domain.Notification, error) {

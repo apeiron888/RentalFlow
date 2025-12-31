@@ -16,6 +16,7 @@ import (
 	"github.com/rentalflow/notification-service/internal/service"
 	"github.com/rentalflow/rentalflow/pkg/database"
 	"github.com/rentalflow/rentalflow/pkg/logger"
+	"github.com/rentalflow/rentalflow/pkg/messaging"
 )
 
 func main() {
@@ -44,8 +45,43 @@ func main() {
 	notifRepo := repository.NewMongoNotificationRepository(client.DB)
 	msgRepo := repository.NewMongoMessageRepository(client.DB)
 
-	// Initialize service (unused for now as HTTP handler doesn't expose it yet)
-	_ = service.NewNotificationService(notifRepo, msgRepo)
+	// Initialize service
+	notifService := service.NewNotificationService(notifRepo, msgRepo)
+
+	// Initialize messaging
+	brokerUrl := fmt.Sprintf("amqp://%s:%s@%s:%d/",
+		cfg.RabbitMQ.User, cfg.RabbitMQ.Password, cfg.RabbitMQ.Host, cfg.RabbitMQ.Port)
+	broker, err := messaging.NewMessageBroker(brokerUrl)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to connect to RabbitMQ, running without messaging")
+	} else {
+		defer broker.Close()
+		log.Info().Str("url", brokerUrl).Msg("Connected to RabbitMQ")
+
+		// Declare exchange and queue
+		if err := broker.DeclareExchange("booking_events", "topic"); err != nil {
+			log.Error().Err(err).Msg("Failed to declare exchange")
+		}
+
+		q, err := broker.DeclareQueue("notification_booking_queue")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to declare queue")
+		} else {
+			if err := broker.BindQueue(q.Name, "booking.#", "booking_events"); err != nil {
+				log.Error().Err(err).Msg("Failed to bind queue")
+			}
+
+			// Subscribe
+			err = broker.Subscribe(q.Name, func(body []byte) error {
+				return notifService.HandleBookingEvent(context.Background(), body)
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to subscribe to booking events")
+			} else {
+				log.Info().Msg("Subscribed to booking events")
+			}
+		}
+	}
 
 	// Initialize email service
 	emailConfig := email.Config{
@@ -57,7 +93,7 @@ func main() {
 		FromName:     os.Getenv("FROM_NAME"),
 	}
 	emailService := email.NewService(emailConfig)
-	httpHandler := handler.NewHTTPHandler(emailService)
+	httpHandler := handler.NewHTTPHandler(notifService, emailService)
 
 	httpAddr := fmt.Sprintf(":%d", cfg.HTTPPort)
 	mux := http.NewServeMux()

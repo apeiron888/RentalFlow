@@ -30,6 +30,14 @@ func (s *ReviewService) CreateReview(ctx context.Context, itemID uuid.UUID, book
 	}
 
 	review := domain.NewReview(bid, reviewerID, reviewType, rating, comment)
+
+	// Set target IDs based on type
+	if reviewType == domain.TypeRenterToItem {
+		review.TargetItemID = &itemID
+	} else if reviewType == domain.TypeRenterToOwner || reviewType == domain.TypeOwnerToRenter {
+		review.TargetUserID = &itemID // In this service, itemID is used as target ID for users too in the handler's call
+	}
+
 	if err := s.reviewRepo.Create(ctx, review); err != nil {
 		return nil, err
 	}

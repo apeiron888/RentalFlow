@@ -15,6 +15,7 @@ import (
 	"github.com/rentalflow/booking-service/internal/service"
 	"github.com/rentalflow/rentalflow/pkg/database"
 	"github.com/rentalflow/rentalflow/pkg/logger"
+	"github.com/rentalflow/rentalflow/pkg/messaging"
 )
 
 func main() {
@@ -40,9 +41,24 @@ func main() {
 
 	log.Info().Str("uri", cfg.Database.GetURI()).Msg("Connected to database")
 
+	// Initialize messaging
+	brokerUrl := fmt.Sprintf("amqp://%s:%s@%s:%d/",
+		cfg.RabbitMQ.User, cfg.RabbitMQ.Password, cfg.RabbitMQ.Host, cfg.RabbitMQ.Port)
+	broker, err := messaging.NewMessageBroker(brokerUrl)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to connect to RabbitMQ, running without messaging")
+	} else {
+		defer broker.Close()
+		log.Info().Str("url", brokerUrl).Msg("Connected to RabbitMQ")
+		// Declare exchange
+		if err := broker.DeclareExchange("booking_events", "topic"); err != nil {
+			log.Fatal().Err(err).Msg("Failed to declare exchange")
+		}
+	}
+
 	// Initialize repositories
 	bookingRepo := repository.NewMongoBookingRepository(client.DB)
-	bookingService := service.NewBookingService(bookingRepo)
+	bookingService := service.NewBookingService(bookingRepo, broker)
 	httpHandler := handler.NewHTTPHandler(bookingService)
 
 	httpAddr := fmt.Sprintf(":%d", cfg.HTTPPort)

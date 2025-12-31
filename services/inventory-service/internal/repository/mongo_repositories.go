@@ -101,8 +101,20 @@ func (r *MongoItemRepository) List(ctx context.Context, offset, limit int, filte
 		return nil, 0, err
 	}
 
+	sort := bson.M{"created_at": -1}
+	if filters.SortBy != nil {
+		switch *filters.SortBy {
+		case "price_low":
+			sort = bson.M{"daily_rate": 1}
+		case "price_high":
+			sort = bson.M{"daily_rate": -1}
+		case "newest":
+			sort = bson.M{"created_at": -1}
+		}
+	}
+
 	opts := options.Find().
-		SetSort(bson.M{"created_at": -1}).
+		SetSort(sort).
 		SetSkip(int64(offset)).
 		SetLimit(int64(limit))
 
@@ -146,8 +158,20 @@ func (r *MongoItemRepository) Search(ctx context.Context, query string, filters 
 		return nil, 0, err
 	}
 
+	sort := bson.M{"created_at": -1}
+	if filters.SortBy != nil {
+		switch *filters.SortBy {
+		case "price_low":
+			sort = bson.M{"daily_rate": 1}
+		case "price_high":
+			sort = bson.M{"daily_rate": -1}
+		case "newest":
+			sort = bson.M{"created_at": -1}
+		}
+	}
+
 	opts := options.Find().
-		SetSort(bson.M{"created_at": -1}).
+		SetSort(sort).
 		SetSkip(int64(offset)).
 		SetLimit(int64(limit))
 

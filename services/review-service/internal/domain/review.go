@@ -30,6 +30,7 @@ type Review struct {
 }
 
 func NewReview(bookingID, reviewerID uuid.UUID, reviewType ReviewType, rating float64, comment string) *Review {
+	now := time.Now()
 	if rating < 1.0 || rating > 5.0 {
 		rating = 5.0
 	}
@@ -42,7 +43,7 @@ func NewReview(bookingID, reviewerID uuid.UUID, reviewType ReviewType, rating fl
 		Comment:    comment,
 		IsVerified: false,
 		IsVisible:  true,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 }

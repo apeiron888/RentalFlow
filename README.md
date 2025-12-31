@@ -1,71 +1,94 @@
-# RentalFlow
+# 🚀 RentalFlow Backend
 
-A distributed microservices-based rental management platform designed for scalability and performance. Built with Go, gRPC, and RabbitMQ.
+RentalFlow is a robust, microservices-based peer-to-peer rental platform. It enables users to list anything from vehicles to property and equipment, handle secure payments via Chapa, and manage the entire rental lifecycle.
 
-## 🏗 System Architecture
+## 🏗️ System Architecture
 
-RentalFlow adopts a microservices architecture with 7 independent services, using **gRPC** for synchronous communication and **RabbitMQ** for asynchronous event handling.
+The system follows a microservices architecture, with an API Gateway acting as the single entry point for the frontend, routing requests to the appropriate internal services.
 
-### Tech Stack
-- **Languages**: Go (Golang) 1.22+
-- **Communication**: gRPC (Internal), REST (Gateway), RabbitMQ (Async Events)
-- **Database**: PostgreSQL 15 (Per-service isolation)
-- **Caching**: Redis 7
-- **Deployment**: Docker, Render (Modular Monolith capability)
+```mermaid
+graph TD
+    Client["📱 Frontend (Vercel)"]
+    Gateway["🛡️ API Gateway (Port 8080)"]
+    
+    subgraph Services ["Core Services"]
+        Auth["👤 Auth Service (8081)"]
+        Inv["📦 Inventory Service (8082)"]
+        Book["📅 Booking Service (8083)"]
+        Pay["💳 Payment Service (8084)"]
+        Review["⭐ Review Service (8085)"]
+        Notif["🔔 Notification Service (8086)"]
+    end
+    
+    subgraph Data ["Infrastructure"]
+        Postgres[(🐘 PostgreSQL)]
+        Redis[(⚡ Redis)]
+        MQ[("🐰 RabbitMQ")]
+    end
 
-### Microservices Overview
+    Client -->|REST| Gateway
+    Gateway -->|Forward| Auth
+    Gateway -->|Forward| Inv
+    Gateway -->|Forward| Book
+    Gateway -->|Forward| Pay
+    Gateway -->|Forward| Review
+    Gateway -->|Forward| Notif
+    
+    Auth & Inv & Book & Pay & Review --> Postgres
+    Inv & Book --> Redis
+    Book -.->|Publish| MQ
+    MQ -.->|Consume| Notif
+```
 
-| Service | Port (HTTP/gRPC) | Description |
-|---------|-------------------|-------------|
-| **API Gateway** | `8080` | Entry point, REST-to-gRPC transcoding, Auth middleware |
-| **Auth Service** | `8081` / `50051` | User registration, JWT issuance, Role-based access |
-| **Inventory Service** | `8082` / `50052` | Equipment/Property management, Stock tracking |
-| **Booking Service** | `8083` / `50053` | Reservation logic, Availability checks |
-| **Payment Service** | `8084` / `50054` | Payment processing integration (Chapa) |
-| **Notification Service** | `8085` / `50055` | Email/SMS alerts via RabbitMQ events |
-| **Review Service** | `8086` / `50056` | Ratings and feedback management |
+## 🛠️ Microservices Overview
 
-## 🚀 Getting Started
+| Service | Responsibility | Technology |
+| :--- | :--- | :--- |
+| **API Gateway** | Routing, CORS, Rate Limiting, Logging | Go, Gorilla Mux |
+| **Auth Service** | JWT Auth, User Profiles, RBAC | Go, Gorm, Postgres |
+| **Inventory Service** | Item Management, Search, Availability | Go, Gorm, Postgres, Redis |
+| **Booking Service** | Lifecycle management, Agreement PDF | Go, Gorm, Postgres, RabbitMQ |
+| **Payment Service** | Chapa Integration, Verification, Refunds | Go, Chapa API |
+| **Notification Service** | Email (SMTP), In-app notifications | Go, RabbitMQ, Gorm |
+| **Review Service** | Ratings and user feedback | Go, Gorm, Postgres |
+
+## 🚦 Getting Started
 
 ### Prerequisites
 - Docker & Docker Compose
-- Go 1.22+ (for local development)
-- Make (optional)
+- Chapa Merchant Account (for API keys)
+- Cloudinary Account (for image hosting)
 
-### Quick Start (Local Docker)
-Run the entire system with a single command:
+### 📦 Setup with Docker Compose
 
-```bash
-# Start all services, databases, and message broker
-docker-compose up --build
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd RentalFlow
+   ```
 
-The API Gateway will be available at `http://localhost:8080`.
+2. **Configure Environment Variables**
+   Copy the example environment file and fill in your credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   *Required variables: `JWT_SECRET`, `CHAPA_SECRET_KEY`, `CHAPA_PUBLIC_KEY`, `CLOUDINARY_CLOUD_NAME`, `SMTP_PASSWORD`.*
 
-### Running Tests
-We emphasize rigorous testing with unit and integration suites.
+3. **Start the ecosystem**
+   ```bash
+   docker-compose up -d
+   ```
 
-```bash
-# Run all unit tests
-make test
+## 📖 API Documentation
 
-# Run integration tests
-./scripts/test_integration.sh
-```
+The full API specification is available in OpenAPI 3.0 format.
 
-## 📦 Deployment
+- **OpenAPI Spec**: [docs/openapi.yaml](./docs/openapi.yaml)
+- **Live Gateway**: `https://rentalflow.onrender.com`
 
-The project is configured for **Render**. We support a "Modular Monolith" deployment to save costs by running all services in a single container while maintaining logical separation.
+## 👨‍💻 Development
 
-- **Unified Dockerfile**: `Dockerfile.render`
-- **Render Config**: `render.yaml`
+For detailed information on each service, please refer to the `README.md` within each service's directory.
 
-## 📚 Documentation
-
-- **API Documentation**: [View API Specification (OpenAPI)](./docs/openapi.yaml)
-- **Project Report**: [Link to PDF]
-- **Progress Logs**: See `docs/progress.md`
-- **Postman Testing Collections**: ./tests
-
-## 📄 License
-MIT License.
+---
+*Built with ❤️ by the RentalFlow Team.*

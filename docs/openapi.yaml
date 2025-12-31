@@ -1,201 +1,14 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: RentalFlow API
-  description: |
-    API Documentation for the RentalFlow platform.
-    
-    This API provides access to all microservices through the unified API Gateway.
-    
-    **Base URL**: `http://localhost:8080/api`
+  description: API documentation for the RentalFlow microservices ecosystem.
   version: 1.0.0
-  contact:
-    name: API Support
-    email: support@rentalflow.com
 
 servers:
-  - url: http://localhost:8080/api
-    description: Local Development Server
-
-paths:
-  # --- Auth Service ---
-  /auth/register:
-    post:
-      tags: [Auth]
-      summary: Register a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '201':
-          description: User registered successfully
-        '400':
-          description: Invalid input
-
-  /auth/login:
-    post:
-      tags: [Auth]
-      summary: Login user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          description: Invalid credentials
-
-  /auth/profile:
-    get:
-      tags: [Auth]
-      summary: Get current user profile
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: User profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-    put:
-      tags: [Auth]
-      summary: Update user profile
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateProfileRequest'
-      responses:
-        '200':
-          description: Profile updated
-
-  # --- Inventory Service ---
-  /inventory:
-    get:
-      tags: [Inventory]
-      summary: List inventory items
-      parameters:
-        - in: query
-          name: category
-          schema:
-            type: string
-        - in: query
-          name: page
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: List of items
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Item'
-    post:
-      tags: [Inventory]
-      summary: Create inventory item
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Item'
-      responses:
-        '201':
-          description: Item created
-
-  /inventory/{id}:
-    get:
-      tags: [Inventory]
-      summary: Get item details
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Item details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Item'
-
-  # --- Booking Service ---
-  /bookings:
-    post:
-      tags: [Booking]
-      summary: Create a booking
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BookingRequest'
-      responses:
-        '201':
-          description: Booking created
-    get:
-      tags: [Booking]
-      summary: List my bookings
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of bookings
-
-  # --- Payment Service ---
-  /payments/initialize:
-    post:
-      tags: [Payment]
-      summary: Initialize payment
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PaymentRequest'
-      responses:
-        '200':
-          description: Payment initialized (contains checkout URL)
-
-  # --- Review Service ---
-  /reviews:
-    post:
-      tags: [Review]
-      summary: Submit a review
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReviewRequest'
-      responses:
-        '201':
-          description: Review submitted
+  - url: https://rentalflow.onrender.com
+    description: Production Server (API Gateway)
+  - url: http://localhost:8080
+    description: Local Development Server (API Gateway)
 
 components:
   securitySchemes:
@@ -205,124 +18,160 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # Auth
-    RegisterRequest:
-      type: object
-      required: [email, password, first_name, last_name]
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 8
-        first_name:
-          type: string
-        last_name:
-          type: string
-        role:
-          type: string
-          enum: [USER, OWNER, ADMIN]
-
-    LoginRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-
-    AuthResponse:
+    Error:
       type: object
       properties:
-        token:
+        error:
           type: string
-        user:
-          $ref: '#/components/schemas/User'
 
     User:
       type: object
       properties:
-        id:
-          type: string
-        email:
-          type: string
-        first_name:
-          type: string
-        last_name:
-          type: string
-        role:
-          type: string
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string }
+        last_name: { type: string }
+        role: { type: string, enum: [renter, owner, admin] }
+        phone: { type: string }
+        bio: { type: string }
+        avatar_url: { type: string, format: url }
 
-    UpdateProfileRequest:
-      type: object
-      properties:
-        first_name:
-          type: string
-        last_name:
-          type: string
-        phone:
-          type: string
-
-    # Inventory
     Item:
       type: object
       properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        price_per_day:
-          type: number
-        category:
-          type: string
-        owner_id:
-          type: string
-        images:
-          type: array
-          items:
-            type: string
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        daily_rate: { type: number }
+        images: { type: array, items: { type: string } }
+        city: { type: string }
+        is_active: { type: boolean }
 
-    # Booking
-    BookingRequest:
+    Booking:
       type: object
-      required: [item_id, start_date, end_date]
       properties:
-        item_id:
-          type: string
-        start_date:
-          type: string
-          format: date-time
-        end_date:
-          type: string
-          format: date-time
+        id: { type: string, format: uuid }
+        booking_number: { type: string }
+        status: { type: string }
+        total_amount: { type: number }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
 
-    # Payment
-    PaymentRequest:
-      type: object
-      required: [booking_id, amount]
-      properties:
-        booking_id:
-          type: string
-        amount:
-          type: number
-        currency:
-          type: string
-          default: ETB
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, first_name, last_name]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                first_name: { type: string }
+                last_name: { type: string }
+                role: { type: string, default: renter }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  access_token: { type: string }
+                  refresh_token: { type: string }
 
-    # Review
-    ReviewRequest:
-      type: object
-      required: [item_id, rating]
-      properties:
-        item_id:
-          type: string
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        comment:
-          type: string
+  /api/auth/login:
+    post:
+      summary: Authenticate user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  access_token: { type: string }
+
+  /api/items:
+    get:
+      summary: List or get items
+      tags: [Inventory]
+      parameters:
+        - name: id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: category
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Success
+    post:
+      summary: Create an item
+      tags: [Inventory]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "201":
+          description: Created
+
+  /api/bookings:
+    post:
+      summary: Create a booking
+      tags: [Booking]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "201":
+          description: Created
+
+  /api/payments/initialize:
+    post:
+      summary: Start a payment flow
+      tags: [Payment]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkout_url: { type: string }
+
+  /api/notifications/user:
+    get:
+      summary: Get user notifications
+      tags: [Notification]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Success
